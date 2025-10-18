@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="My Casual - Belanja fashion online dengan harga terjangkau dan kualitas terbaik" />
+  <title>My Casual - Fashion Online Store</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Midtrans Snap JS -->
+  <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-IVmBnxtTXGV5plH1"></script>
+  <!-- PRODUCTION: Gunakan https://app.midtrans.com/snap/snap.js -->
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container">
+      <h1 class="brand">My Casual</h1>
+      <nav class="nav">
+        <a href="#" class="active">Beranda</a>
+        <a href="#produk">Produk</a>
+        <a href="#kontak">Kontak</a>
+      </nav>
+      <button class="cart-btn" id="openCart" aria-label="Buka Keranjang">
+        <i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h2>Belanja hemat, kualitas mantap</h2>
+        <p>Temukan koleksi fashion terbaik dengan harga terjangkau. Dari casual hingga formal, semua ada di sini!</p>
+        <a href="#produk" class="btn">
+          <i class="fas fa-shopping-bag"></i> Lihat Produk
+        </a>
+      </div>
+      <div class="hero-illustration">
+        <i class="fas fa-shopping-bag"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Products Section -->
+    <section id="produk">
+      <h3>Produk Pilihan</h3>
+      <div id="productGrid" class="grid">
+        <!-- Products will be rendered here by JavaScript -->
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="kontak" class="contact">
+      <h3>Hubungi Kami</h3>
+      <div class="contact-info">
+        <div class="contact-item">
+          <i class="fas fa-instagram"></i>
+          <div>
+            <strong>Instagram</strong>
+            <p><a href="https://instagram.com/mycasual" target="_blank" rel="noopener">@mycasual</a></p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <i class="fas fa-envelope"></i>
+          <div>
+            <strong>Email</strong>
+            <p><a href="mailto:halo@mycasual.id">halo@mycasual.id</a></p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <i class="fas fa-phone"></i>
+          <div>
+            <strong>WhatsApp</strong>
+            <p><a href="https://wa.me/6281234567890" target="_blank" rel="noopener">+62 812-3456-7890</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Cart Drawer -->
+  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
+    <div class="cart-header">
+      <h4><i class="fas fa-shopping-cart"></i> Keranjang</h4>
+      <button id="closeCart" aria-label="Tutup Keranjang">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div id="cartItems" class="cart-items">
+      <!-- Cart items will be rendered here by JavaScript -->
+    </div>
+    <div class="cart-footer">
+      <div class="totals">
+        <span>Total:</span>
+        <strong id="cartTotal">Rp0</strong>
+      </div>
+      <button id="checkoutBtn" class="btn full">
+        <i class="fas fa-credit-card"></i> Checkout
+      </button>
+      <button id="clearBtn" class="btn outline full">
+        <i class="fas fa-trash"></i> Kosongkan
+      </button>
+    </div>
+  </aside>
+
+  <!-- Backdrop -->
+  <div id="backdrop" class="backdrop" hidden></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+
+</html>
