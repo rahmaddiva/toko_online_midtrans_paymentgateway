@@ -1,4 +1,6 @@
-// Product Data - Fashion/Outfit Items
+// --- KONFIGURASI DAN DATA ---
+
+// Data Produk - Daftar item fashion/pakaian
 const PRODUCTS = [
   {
     id: 1,
@@ -114,26 +116,39 @@ const PRODUCTS = [
   }
 ];
 
-// API Configuration
+// Konfigurasi URL API backend untuk pembayaran
 const API_URL = 'http://localhost:3000/api/payment';
 
-// Helper functions
+// --- FUNGSI BANTU ---
+
+// Fungsi untuk memformat angka menjadi format mata uang Rupiah (IDR)
 const fmt = n => new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(n);
+// Fungsi shortcut untuk memilih elemen DOM menggunakan selector CSS
 const $ = sel => document.querySelector(sel);
 
-// DOM elements
-const productGrid = $("#productGrid");
-const cartDrawer = $("#cartDrawer");
-const backdrop = $("#backdrop");
-const cartCount = $("#cartCount");
-const cartItems = $("#cartItems");
-const cartTotal = $("#cartTotal");
+// --- ELEMEN DOM ---
 
-// Cart storage (in-memory since localStorage is not supported)
+// Memilih elemen-elemen DOM yang akan dimanipulasi
+const productGrid = $("#productGrid"); // Grid untuk menampilkan produk
+const cartDrawer = $("#cartDrawer");   // Panel samping keranjang belanja
+const backdrop = $("#backdrop");       // Latar belakang gelap saat keranjang terbuka
+const cartCount = $("#cartCount");     // Badge jumlah item di ikon keranjang
+const cartItems = $("#cartItems");     // Kontainer untuk daftar item di keranjang
+const cartTotal = $("#cartTotal");     // Elemen untuk menampilkan total harga
+
+// --- MANAJEMEN STATE KERANJANG ---
+
+// Variabel untuk menyimpan data keranjang belanja di memori
+// (localStorage tidak didukung di lingkungan ini, jadi menggunakan variabel biasa)
 let cartData = [];
 
-// Render products to grid
+// --- FUNGSI-FUNGSI UTAMA ---
+
+/**
+ * Merender (menampilkan) semua produk ke dalam grid di halaman.
+ */
 function renderProducts() {
+  // Mengisi grid produk dengan HTML yang digenerate dari data `PRODUCTS`
   productGrid.innerHTML = PRODUCTS.map(p => `
     <article class="card">
       <img src="${p.img}" alt="${p.name}" loading="lazy">
@@ -153,41 +168,54 @@ function renderProducts() {
     </article>
   `).join("");
   
+  // Menambahkan event listener untuk setiap tombol "Tambah"
   productGrid.querySelectorAll(".add").forEach(btn => 
     btn.addEventListener("click", onAdd)
   );
+  // Menambahkan event listener untuk setiap tombol "Detail"
   productGrid.querySelectorAll(".detail").forEach(btn => 
     btn.addEventListener("click", onDetail)
   );
 }
 
-// Read cart from memory
+/**
+ * Membaca data keranjang dari variabel `cartData`.
+ * @returns {Array} Array item di keranjang.
+ */
 function readCart() {
   return cartData;
 }
 
-// Save cart to memory
+/**
+ * Menyimpan data keranjang ke variabel `cartData` dan memperbarui badge.
+ * @param {Array} items - Array item keranjang yang baru.
+ */
 function saveCart(items) {
   cartData = items;
-  updateBadge();
+  updateBadge(); // Memperbarui tampilan jumlah item di ikon keranjang
 }
 
-// Add to cart
+/**
+ * Menambahkan produk ke keranjang atau menambah jumlahnya jika sudah ada.
+ * @param {number} id - ID produk yang akan ditambahkan.
+ */
 function addToCart(id) {
   const items = readCart();
   const idx = items.findIndex(it => it.id === id);
   
   if (idx > -1) {
+    // Jika produk sudah ada, tambah kuantitasnya
     items[idx].qty += 1;
   } else {
+    // Jika produk belum ada, tambahkan sebagai item baru
     const p = PRODUCTS.find(x => x.id === id);
     items.push({id: p.id, name: p.name, price: p.price, img: p.img, qty: 1});
   }
   
   saveCart(items);
-  renderCart();
+  renderCart(); // Perbarui tampilan keranjang
   
-  // Success notification
+  // Menampilkan notifikasi sukses menggunakan SweetAlert
   const product = PRODUCTS.find(p => p.id === id);
   Swal.fire({
     icon: 'success',
@@ -201,10 +229,14 @@ function addToCart(id) {
   });
 }
 
-// Remove from cart
+/**
+ * Menghapus item dari keranjang setelah konfirmasi.
+ * @param {number} id - ID produk yang akan dihapus.
+ */
 function removeFromCart(id) {
   const item = readCart().find(it => it.id === id);
   
+  // Menampilkan dialog konfirmasi penghapusan
   Swal.fire({
     title: 'Hapus item?',
     text: `Hapus ${item.name} dari keranjang?`,
@@ -216,10 +248,12 @@ function removeFromCart(id) {
     cancelButtonText: 'Batal'
   }).then((result) => {
     if (result.isConfirmed) {
+      // Jika dikonfirmasi, filter item dan simpan keranjang baru
       let items = readCart().filter(it => it.id !== id);
       saveCart(items);
-      renderCart();
+      renderCart(); // Perbarui tampilan keranjang
       
+      // Notifikasi sukses penghapusan
       Swal.fire({
         icon: 'success',
         title: 'Terhapus!',
@@ -233,23 +267,32 @@ function removeFromCart(id) {
   });
 }
 
-// Set quantity
+/**
+ * Mengatur kuantitas item di keranjang. Jika kuantitas < 1, item akan dihapus.
+ * @param {number} id - ID produk.
+ * @param {number} qty - Kuantitas baru.
+ */
 function setQty(id, qty) {
   if (qty < 1) {
+    // Jika kuantitas kurang dari 1, hapus item
     removeFromCart(id);
     return;
   }
   
+  // Update kuantitas item yang sesuai
   let items = readCart().map(it => it.id === id ? {...it, qty: qty} : it);
   saveCart(items);
-  renderCart();
+  renderCart(); // Perbarui tampilan keranjang
 }
 
-// Clear cart
+/**
+ * Mengosongkan semua item dari keranjang setelah konfirmasi.
+ */
 function clearCart() {
   const items = readCart();
   
   if (items.length === 0) {
+    // Jika keranjang sudah kosong, tampilkan notifikasi
     Swal.fire({
       icon: 'info',
       title: 'Keranjang Sudah Kosong',
@@ -261,6 +304,7 @@ function clearCart() {
     return;
   }
   
+  // Dialog konfirmasi untuk mengosongkan keranjang
   Swal.fire({
     title: 'Kosongkan Keranjang?',
     text: 'Semua item akan dihapus dari keranjang',
@@ -272,9 +316,10 @@ function clearCart() {
     cancelButtonText: 'Batal'
   }).then((result) => {
     if (result.isConfirmed) {
-      saveCart([]);
-      renderCart();
+      saveCart([]); // Kosongkan data keranjang
+      renderCart(); // Perbarui tampilan keranjang
       
+      // Notifikasi sukses
       Swal.fire({
         icon: 'success',
         title: 'Keranjang Dikosongkan',
@@ -287,7 +332,11 @@ function clearCart() {
   });
 }
 
-// Get Snap Token from Backend
+/**
+ * Mengambil Snap Token dari backend untuk memulai transaksi Midtrans.
+ * @param {object} transactionData - Data transaksi (total, item, pelanggan).
+ * @returns {Promise<string>} Snap Token dari Midtrans.
+ */
 async function getSnapToken(transactionData) {
   try {
     const response = await fetch(`${API_URL}/create-transaction`, {
@@ -301,33 +350,39 @@ async function getSnapToken(transactionData) {
     const result = await response.json();
     
     if (!result.success) {
-      throw new Error(result.message || 'Failed to create transaction');
+      throw new Error(result.message || 'Gagal membuat transaksi');
     }
 
     return result.data.token;
   } catch (error) {
-    console.error('Error getting snap token:', error);
+    console.error('Error saat mengambil snap token:', error);
     throw error;
   }
 }
 
-// Update badge
+/**
+ * Memperbarui badge yang menunjukkan jumlah total item di keranjang.
+ */
 function updateBadge() {
   const totalQty = readCart().reduce((a, b) => a + b.qty, 0);
   cartCount.textContent = totalQty;
 }
 
-// Render cart
+/**
+ * Merender (menampilkan) item-item di dalam panel keranjang.
+ */
 function renderCart() {
   const items = readCart();
   
   if (items.length === 0) {
+    // Jika keranjang kosong, tampilkan pesan
     cartItems.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:2rem;">Keranjang kosong</p>';
     cartTotal.textContent = fmt(0);
     updateBadge();
     return;
   }
   
+  // Generate HTML untuk setiap item di keranjang
   cartItems.innerHTML = items.map(it => `
     <div class="cart-item">
       <img src="${it.img}" alt="${it.name}">
@@ -347,22 +402,33 @@ function renderCart() {
     </div>
   `).join("");
   
+  // Hitung dan tampilkan total harga
   const total = items.reduce((sum, it) => sum + it.price * it.qty, 0);
   cartTotal.textContent = fmt(total);
-  updateBadge();
+  updateBadge(); // Perbarui badge
 }
 
-// Event handlers
+// --- EVENT HANDLERS ---
+
+/**
+ * Handler untuk event klik pada tombol "Tambah ke Keranjang".
+ * @param {Event} e - Objek event.
+ */
 function onAdd(e) {
   const id = Number(e.currentTarget.dataset.id);
   addToCart(id);
-  openCart();
+  openCart(); // Buka panel keranjang setelah menambahkan item
 }
 
+/**
+ * Handler untuk event klik pada tombol "Detail". Menampilkan modal dengan info produk.
+ * @param {Event} e - Objek event.
+ */
 function onDetail(e) {
   const id = Number(e.currentTarget.dataset.id);
   const product = PRODUCTS.find(p => p.id === id);
   
+  // Tampilkan modal detail produk menggunakan SweetAlert
   Swal.fire({
     title: product.name,
     html: `
@@ -378,32 +444,45 @@ function onDetail(e) {
     cancelButtonColor: '#6b7280'
   }).then((result) => {
     if (result.isConfirmed) {
+      // Jika tombol "Tambah" di modal diklik
       addToCart(id);
       openCart();
     }
   });
 }
 
-// Cart actions
+// --- AKSI KERANJANG (UI) ---
+
+/**
+ * Membuka panel samping keranjang belanja.
+ */
 function openCart() {
   cartDrawer.classList.add("open");
   cartDrawer.setAttribute("aria-hidden", "false");
   backdrop.hidden = false;
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden'; // Mencegah scroll halaman utama
 }
 
+/**
+ * Menutup panel samping keranjang belanja.
+ */
 function closeCart() {
   cartDrawer.classList.remove("open");
   cartDrawer.setAttribute("aria-hidden", "true");
   backdrop.hidden = true;
-  document.body.style.overflow = '';
+  document.body.style.overflow = ''; // Mengizinkan scroll kembali
 }
 
-// Checkout with Midtrans Integration
+// --- PROSES CHECKOUT ---
+
+/**
+ * Menangani seluruh proses checkout, mulai dari pengumpulan data pelanggan hingga pembayaran via Midtrans.
+ */
 async function checkout() {
   const items = readCart();
   
   if (items.length === 0) {
+    // Jika keranjang kosong, tampilkan peringatan
     Swal.fire({
       icon: 'warning',
       title: 'Keranjang Kosong',
@@ -416,7 +495,7 @@ async function checkout() {
   const total = items.reduce((sum, it) => sum + it.price * it.qty, 0);
   const itemCount = items.reduce((sum, it) => sum + it.qty, 0);
 
-  // Show confirmation dialog
+  // Menampilkan modal untuk mengisi informasi pembeli
   const { value: formValues } = await Swal.fire({
     title: 'Informasi Pembeli',
     html: `
@@ -437,6 +516,7 @@ async function checkout() {
     confirmButtonText: '<i class="fas fa-credit-card"></i> Lanjut Pembayaran',
     cancelButtonText: 'Batal',
     preConfirm: () => {
+      // Validasi input sebelum konfirmasi
       const name = document.getElementById('name').value;
       const email = document.getElementById('email').value;
       const phone = document.getElementById('phone').value;
@@ -446,7 +526,6 @@ async function checkout() {
         return false;
       }
 
-      // Email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         Swal.showValidationMessage('Format email tidak valid!');
@@ -457,10 +536,10 @@ async function checkout() {
     }
   });
 
-  if (!formValues) return;
+  if (!formValues) return; // Jika pengguna membatalkan, hentikan proses
 
   try {
-    // Show loading
+    // Tampilkan loading indicator
     Swal.fire({
       title: 'Memproses Pembayaran...',
       html: 'Mohon tunggu, sedang menghubungkan ke payment gateway',
@@ -471,7 +550,7 @@ async function checkout() {
       }
     });
 
-    // Prepare transaction data
+    // Siapkan data transaksi untuk dikirim ke backend
     const transactionData = {
       amount: total,
       items: items.map(item => ({
@@ -488,22 +567,19 @@ async function checkout() {
       }
     };
 
-    // Get snap token from backend
+    // Ambil Snap Token dari backend
     const snapToken = await getSnapToken(transactionData);
 
-    // Close loading
-    Swal.close();
+    Swal.close(); // Tutup loading indicator
 
-    // Open Midtrans Snap payment page
+    // Buka halaman pembayaran Midtrans Snap
     window.snap.pay(snapToken, {
       onSuccess: function(result) {
-        console.log('Payment success:', result);
-        
-        // Clear cart
-        saveCart([]);
+        // Callback saat pembayaran sukses
+        console.log('Pembayaran sukses:', result);
+        saveCart([]); // Kosongkan keranjang
         renderCart();
         closeCart();
-        
         Swal.fire({
           icon: 'success',
           title: 'Pembayaran Berhasil!',
@@ -518,10 +594,9 @@ async function checkout() {
         });
       },
       onPending: function(result) {
-        console.log('Payment pending:', result);
-        
+        // Callback saat pembayaran tertunda
+        console.log('Pembayaran tertunda:', result);
         closeCart();
-        
         Swal.fire({
           icon: 'info',
           title: 'Pembayaran Tertunda',
@@ -535,8 +610,8 @@ async function checkout() {
         });
       },
       onError: function(result) {
-        console.error('Payment error:', result);
-        
+        // Callback saat terjadi error pembayaran
+        console.error('Error pembayaran:', result);
         Swal.fire({
           icon: 'error',
           title: 'Pembayaran Gagal',
@@ -549,13 +624,14 @@ async function checkout() {
         });
       },
       onClose: function() {
-        console.log('Payment popup closed');
+        // Callback saat popup pembayaran ditutup
+        console.log('Popup pembayaran ditutup');
       }
     });
 
   } catch (error) {
-    console.error('Checkout error:', error);
-    
+    // Tangani error jika gagal menghubungi backend
+    console.error('Error checkout:', error);
     Swal.fire({
       icon: 'error',
       title: 'Terjadi Kesalahan',
@@ -566,28 +642,31 @@ async function checkout() {
   }
 }
 
-// Global functions for inline handlers
+// --- INISIALISASI ---
+
+// Membuat fungsi global yang bisa diakses dari atribut `onclick` di HTML
 window.increase = id => setQty(id, readCart().find(it => it.id === id).qty + 1);
 window.decrease = id => {
   const item = readCart().find(it => it.id === id);
   if (item.qty === 1) {
-    removeFromCart(id);
+    removeFromCart(id); // Hapus jika kuantitas akan menjadi 0
   } else {
     setQty(id, item.qty - 1);
   }
 };
 
-// Initialize on page load
+// Menjalankan kode setelah seluruh konten halaman dimuat
 document.addEventListener("DOMContentLoaded", () => {
+  // Render awal
   renderProducts();
   renderCart();
   updateBadge();
   
-  // Set current year
+  // Mengatur tahun saat ini di footer
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
   
-  // Cart controls
+  // Menambahkan event listener untuk kontrol keranjang
   const openCartBtn = document.getElementById("openCart");
   const closeCartBtn = document.getElementById("closeCart");
   const checkoutBtn = document.getElementById("checkoutBtn");

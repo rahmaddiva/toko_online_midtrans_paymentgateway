@@ -1,30 +1,41 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-require('dotenv').config();
+// --- IMPOR DEPENDENSI ---
 
-const paymentRoutes = require('./src/routes/paymentRoutes');
-const errorHandler = require('./src/middleware/errorHandler');
+// Mengimpor modul-modul yang diperlukan
+const express = require('express'); // Framework web untuk Node.js
+const cors = require('cors');       // Middleware untuk mengaktifkan Cross-Origin Resource Sharing
+const bodyParser = require('body-parser'); // Middleware untuk mem-parsing body permintaan
+require('dotenv').config();         // Memuat variabel lingkungan dari file .env
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Mengimpor rute dan middleware kustom
+const paymentRoutes = require('./src/routes/paymentRoutes'); // Rute untuk fungsionalitas pembayaran
+const errorHandler = require('./src/middleware/errorHandler'); // Middleware untuk penanganan error global
 
-// Middleware
+// --- INISIALISASI APLIKASI ---
+
+const app = express(); // Membuat instance aplikasi Express
+const PORT = process.env.PORT || 3000; // Menentukan port server, default ke 3000 jika tidak ada di .env
+
+// --- MIDDLEWARE ---
+
+// Mengaktifkan CORS dengan konfigurasi dari variabel lingkungan
 app.use(cors({
-  origin: process.env.CORS_ORIGIN.split(','),
-  credentials: true
+  origin: process.env.CORS_ORIGIN.split(','), // Mengizinkan permintaan dari origin yang ditentukan
+  credentials: true // Mengizinkan pengiriman cookie
 }));
 
+// Middleware untuk mem-parsing body permintaan JSON dan URL-encoded
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Request logging middleware
+// Middleware sederhana untuk mencatat (log) setiap permintaan yang masuk
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-  next();
+  next(); // Lanjutkan ke middleware atau handler berikutnya
 });
 
-// Routes
+// --- RUTE (ROUTES) ---
+
+// Rute utama (root) untuk memberikan informasi status API
 app.get('/', (req, res) => {
   res.json({
     success: true,
@@ -39,10 +50,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Payment routes
+// Menggunakan rute pembayaran yang telah diimpor dengan prefix /api/payment
 app.use('/api/payment', paymentRoutes);
 
-// 404 Handler
+// --- PENANGANAN ERROR ---
+
+// Handler untuk rute yang tidak ditemukan (404 Not Found)
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -50,10 +63,12 @@ app.use((req, res) => {
   });
 });
 
-// Error Handler
+// Middleware penanganan error global. Akan menangkap semua error yang terjadi di aplikasi.
 app.use(errorHandler);
 
-// Start server
+// --- MEMULAI SERVER ---
+
+// Menjalankan server pada port yang telah ditentukan
 app.listen(PORT, () => {
   console.log('=================================');
   console.log(`🚀 Server running on port ${PORT}`);
@@ -63,8 +78,10 @@ app.listen(PORT, () => {
   console.log('=================================');
 });
 
-// Handle unhandled promise rejections
+// --- PENANGANAN PROMISE REJECTION ---
+
+// Menangani promise rejection yang tidak tertangkap untuk mencegah crash
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err);
-  process.exit(1);
+  process.exit(1); // Keluar dari proses dengan status error
 });
