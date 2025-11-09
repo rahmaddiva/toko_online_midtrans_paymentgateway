@@ -8,12 +8,13 @@
   <title>My Casual - Fashion Online Store</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  
+
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+
   <!-- Midtrans Snap JS -->
-  <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-IVmBnxtTXGV5plH1"></script>
+  <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js"
+    data-client-key="SB-Mid-client-IVmBnxtTXGV5plH1"></script>
   <!-- PRODUCTION: Gunakan https://app.midtrans.com/snap/snap.js -->
 </head>
 
@@ -26,6 +27,7 @@
         <a href="#" class="active">Beranda</a>
         <a href="#produk">Produk</a>
         <a href="#kontak">Kontak</a>
+        <a href="histori.html">History Pembelian</a>
       </nav>
       <button class="cart-btn" id="openCart" aria-label="Buka Keranjang">
         <i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span>
@@ -100,9 +102,24 @@
       <!-- Cart items will be rendered here by JavaScript -->
     </div>
     <div class="cart-footer">
+      <div class="coupon-area">
+        <input type="text" id="couponCode" placeholder="Masukkan Kode Kupon">
+        <button id="applyCouponBtn">Terapkan</button>
+      </div>
+      <div id="couponInfo" class="coupon-info"></div>
       <div class="totals">
-        <span>Total:</span>
-        <strong id="cartTotal">Rp0</strong>
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span id="cartSubtotal">Rp0</span>
+        </div>
+        <div id="discountRow" class="total-row" style="display: none;">
+          <span>Diskon:</span>
+          <span id="cartDiscount">-Rp0</span>
+        </div>
+        <div class="total-row final-total">
+          <strong>Total:</strong>
+          <strong id="cartTotal">Rp0</strong>
+        </div>
       </div>
       <button id="checkoutBtn" class="btn full">
         <i class="fas fa-credit-card"></i> Checkout

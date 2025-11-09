@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="My Casual - Belanja fashion online dengan harga terjangkau dan kualitas terbaik" />
+    <title>My Casual - Histori Pembelian</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- DataTables Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="container">
+            <h1 class="brand">My Casual</h1>
+            <nav class="nav">
+                <a href="index.html">Beranda</a>
+                <a href="index.html#produk">Produk</a>
+                <a href="index.html#kontak">Kontak</a>
+                <a href="#" class="active">History Pembelian</a>
+            </nav>
+            <button class="cart-btn" id="openCart" aria-label="Buka Keranjang">
+                <i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <section id="history">
+            <h3>Histori Pembelian</h3>
+            <div class="table-responsive">
+                <table id="historyTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Order ID</th>
+                            <th>Detail Item</th>
+                            <th>Total</th>
+                            <th>Metode Pembayaran</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="purchaseHistory">
+                        <!-- Rows will be rendered here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <p class="no-history" id="noHistoryMessage" style="display: none; text-align: center; padding: 2rem;">Belum
+                ada riwayat pembelian.</p>
+        </section>
+
+    </main>
+
+    <!-- Scripts -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <!-- DataTables Bootstrap 5 JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script src="history.js"></script>
+</body>
+
+</html>

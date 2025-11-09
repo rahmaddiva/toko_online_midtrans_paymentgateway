@@ -1,4 +1,20 @@
-const { snap, coreApi } = require('../config/midtrans');
+const { snap, coreApi } = require("../config/midtrans");
+
+// --- DATABASE KUPON SEDERHANA ---
+// Di aplikasi nyata, ini akan berasal dari database (misalnya, MongoDB, PostgreSQL).
+const COUPONS = {
+  HEMAT10: { type: "percentage", value: 10 }, // Diskon 10%
+  DISKON25K: { type: "fixed", value: 25000 }, // Potongan Rp 25.000
+  MYCASUAL: { type: "percentage", value: 15 }, // Diskon 15%
+};
+
+// Fungsi untuk menghitung diskon
+const calculateDiscount = (total, coupon) => {
+  if (coupon.type === "percentage") {
+    return (total * coupon.value) / 100;
+  }
+  return coupon.value;
+};
 
 // Generate order ID unik
 const generateOrderId = () => {
@@ -10,55 +26,98 @@ const generateOrderId = () => {
 // Create Transaction - Generate Snap Token
 exports.createTransaction = async (req, res, next) => {
   try {
-    const { orderId, amount, items, customer } = req.body;
+    const { orderId, amount, items, customer, couponCode } = req.body;
 
     // Validasi input
     if (!amount || !items || !customer) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: amount, items, or customer'
+        message: "Missing required fields: amount, items, or customer",
       });
     }
 
     // Generate order ID jika tidak disediakan
     const finalOrderId = orderId || generateOrderId();
 
+    let gross_amount = amount;
+    let discount = 0;
+
+    // Validasi ulang kupon di backend untuk keamanan
+    if (couponCode && COUPONS[couponCode]) {
+      const coupon = COUPONS[couponCode];
+      discount = calculateDiscount(amount, coupon);
+      gross_amount = Math.max(0, amount - discount); // Pastikan total tidak negatif
+    }
+
     // Parameter transaksi untuk Midtrans
     const parameter = {
       transaction_details: {
         order_id: finalOrderId,
-        gross_amount: amount
+        gross_amount: gross_amount,
       },
       item_details: items,
       customer_details: customer,
       callbacks: {
-        finish: 'http://localhost:5500/payment-success.html',
-        error: 'http://localhost:5500/payment-error.html',
-        pending: 'http://localhost:5500/payment-pending.html'
-      }
+        finish: "http://localhost:5500/payment-success.html",
+        error: "http://localhost:5500/payment-error.html",
+        pending: "http://localhost:5500/payment-pending.html",
+      },
     };
 
     // Buat transaksi dan dapatkan token
     const transaction = await snap.createTransaction(parameter);
 
-    console.log('Transaction created:', {
+    console.log("Transaction created:", {
       orderId: finalOrderId,
-      amount: amount,
-      token: transaction.token
+      amount: gross_amount,
+      token: transaction.token,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Transaction token generated successfully',
+      message: "Transaction token generated successfully",
       data: {
         token: transaction.token,
         redirect_url: transaction.redirect_url,
-        order_id: finalOrderId
-      }
+        order_id: finalOrderId,
+      },
     });
-
   } catch (error) {
-    console.error('Error creating transaction:', error);
+    console.error("Error creating transaction:", error);
+    next(error);
+  }
+};
+
+// Validate Coupon
+exports.validateCoupon = async (req, res, next) => {
+  try {
+    const { couponCode, total } = req.body;
+
+    if (!couponCode || !total) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon code and total are required",
+      });
+    }
+
+    const coupon = COUPONS[couponCode.toUpperCase()];
+
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Kupon tidak valid atau sudah kedaluwarsa.",
+      });
+    }
+
+    const discount = calculateDiscount(total, coupon);
+    const newTotal = total - discount;
+
+    res.status(200).json({
+      success: true,
+      message: "Kupon berhasil diterapkan!",
+      data: { discount, newTotal },
+    });
+  } catch (error) {
     next(error);
   }
 };
@@ -67,8 +126,8 @@ exports.createTransaction = async (req, res, next) => {
 exports.paymentNotification = async (req, res, next) => {
   try {
     const notification = req.body;
-    
-    console.log('Payment notification received:', notification);
+
+    console.log("Payment notification received:", notification);
 
     // Verifikasi notifikasi dari Midtrans
     const statusResponse = await coreApi.transaction.notification(notification);
@@ -78,39 +137,44 @@ exports.paymentNotification = async (req, res, next) => {
     const fraudStatus = statusResponse.fraud_status;
     const paymentType = statusResponse.payment_type;
 
-    console.log(`Transaction notification received. Order ID: ${orderId}. Transaction status: ${transactionStatus}. Fraud status: ${fraudStatus}`);
+    console.log(
+      `Transaction notification received. Order ID: ${orderId}. Transaction status: ${transactionStatus}. Fraud status: ${fraudStatus}`
+    );
 
     // Logic berdasarkan status pembayaran
-    let orderStatus = '';
-    
-    if (transactionStatus === 'capture') {
-      if (fraudStatus === 'accept') {
-        orderStatus = 'success';
+    let orderStatus = "";
+
+    if (transactionStatus === "capture") {
+      if (fraudStatus === "accept") {
+        orderStatus = "success";
         // TODO: Update database - order berhasil
       }
-    } else if (transactionStatus === 'settlement') {
-      orderStatus = 'success';
+    } else if (transactionStatus === "settlement") {
+      orderStatus = "success";
       // TODO: Update database - pembayaran selesai
-    } else if (transactionStatus === 'cancel' || transactionStatus === 'deny' || transactionStatus === 'expire') {
-      orderStatus = 'failed';
+    } else if (
+      transactionStatus === "cancel" ||
+      transactionStatus === "deny" ||
+      transactionStatus === "expire"
+    ) {
+      orderStatus = "failed";
       // TODO: Update database - order gagal
-    } else if (transactionStatus === 'pending') {
-      orderStatus = 'pending';
+    } else if (transactionStatus === "pending") {
+      orderStatus = "pending";
       // TODO: Update database - menunggu pembayaran
     }
 
     res.status(200).json({
       success: true,
-      message: 'Notification processed',
+      message: "Notification processed",
       data: {
         order_id: orderId,
         status: orderStatus,
-        transaction_status: transactionStatus
-      }
+        transaction_status: transactionStatus,
+      },
     });
-
   } catch (error) {
-    console.error('Error processing notification:', error);
+    console.error("Error processing notification:", error);
     next(error);
   }
 };
@@ -123,33 +187,32 @@ exports.checkTransactionStatus = async (req, res, next) => {
     if (!orderId) {
       return res.status(400).json({
         success: false,
-        message: 'Order ID is required'
+        message: "Order ID is required",
       });
     }
 
     // Cek status transaksi ke Midtrans
     const statusResponse = await coreApi.transaction.status(orderId);
 
-    console.log('Transaction status checked:', {
+    console.log("Transaction status checked:", {
       orderId: orderId,
-      status: statusResponse.transaction_status
+      status: statusResponse.transaction_status,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Transaction status retrieved',
+      message: "Transaction status retrieved",
       data: {
         order_id: statusResponse.order_id,
         transaction_status: statusResponse.transaction_status,
         fraud_status: statusResponse.fraud_status,
         payment_type: statusResponse.payment_type,
         gross_amount: statusResponse.gross_amount,
-        transaction_time: statusResponse.transaction_time
-      }
+        transaction_time: statusResponse.transaction_time,
+      },
     });
-
   } catch (error) {
-    console.error('Error checking transaction status:', error);
+    console.error("Error checking transaction status:", error);
     next(error);
   }
 };
@@ -162,26 +225,59 @@ exports.cancelTransaction = async (req, res, next) => {
     if (!orderId) {
       return res.status(400).json({
         success: false,
-        message: 'Order ID is required'
+        message: "Order ID is required",
       });
     }
 
     // Cancel transaksi
     const cancelResponse = await coreApi.transaction.cancel(orderId);
 
-    console.log('Transaction cancelled:', {
+    console.log("Transaction cancelled:", {
       orderId: orderId,
-      status: cancelResponse.transaction_status
+      status: cancelResponse.transaction_status,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Transaction cancelled successfully',
-      data: cancelResponse
+      message: "Transaction cancelled successfully",
+      data: cancelResponse,
     });
-
   } catch (error) {
-    console.error('Error cancelling transaction:', error);
+    console.error("Error cancelling transaction:", error);
+    next(error);
+  }
+};
+
+// Get Multiple Transaction Statuses
+exports.checkMultipleTransactionStatus = async (req, res, next) => {
+  try {
+    const { orderIds } = req.body;
+
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "orderIds must be a non-empty array",
+      });
+    }
+
+    // Ambil status untuk setiap orderId
+    const statusPromises = orderIds.map((orderId) =>
+      coreApi.transaction.status(orderId).catch((err) => ({
+        order_id: orderId,
+        transaction_status: "not_found", // Handle jika order tidak ditemukan
+        error: err.message,
+      }))
+    );
+
+    const statuses = await Promise.all(statusPromises);
+
+    res.status(200).json({
+      success: true,
+      message: "Transaction statuses retrieved",
+      data: statuses,
+    });
+  } catch (error) {
+    console.error("Error checking multiple transaction statuses:", error);
     next(error);
   }
 };

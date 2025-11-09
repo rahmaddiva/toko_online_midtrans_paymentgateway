@@ -590,17 +590,33 @@ h3::after {
 
 .totals {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
-  font-size: 1.25rem;
   padding: 1rem;
   background: white;
   border-radius: 12px;
 }
 
-.totals strong {
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  color: var(--text-light);
+}
+
+.final-total {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.final-total strong {
   color: var(--secondary);
-  font-size: 1.5rem;
 }
 
 .cart-footer .btn {
@@ -728,4 +744,87 @@ h3::after {
     background: #374151;
     color: var(--text);
   }
+}
+
+.coupon-area {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.coupon-area input {
+  flex-grow: 1;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.coupon-area button {
+  border: none;
+  background: var(--secondary);
+  color: white;
+  padding: 0 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.coupon-area button:hover {
+  opacity: 0.85;
+}
+
+.coupon-info {
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.coupon-info.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--secondary);
+}
+
+.coupon-info.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+/* Badge Status */
+.badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: .75em;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+  text-transform: capitalize;
+}
+
+.badge.success { background-color: var(--secondary); }
+.badge.pending { background-color: var(--accent); }
+.badge.expired { background-color: #6c757d; }
+.badge.failed { background-color: var(--danger); }
+.badge.warning { background-color: #fd7e14; }
+.badge.default { background-color: var(--text-light); }
+
+/* Item list in table */
+.item-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.history-discount {
+  font-size: 0.8rem;
+  color: var(--secondary);
+  margin-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+  padding-top: 0.5rem;
 }
