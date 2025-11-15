@@ -100,6 +100,7 @@ exports.validateCoupon = async (req, res, next) => {
       });
     }
 
+
     const coupon = COUPONS[couponCode.toUpperCase()];
 
     if (!coupon) {
@@ -126,7 +127,6 @@ exports.validateCoupon = async (req, res, next) => {
 exports.paymentNotification = async (req, res, next) => {
   try {
     const notification = req.body;
-
     console.log("Payment notification received:", notification);
 
     // Verifikasi notifikasi dari Midtrans
