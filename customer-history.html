@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Pembelian - My Casual</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .history-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .history-header h1 {
+            font-size: 1.75rem;
+            color: #1f2937;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-box input {
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            width: 200px;
+            font-size: 0.9rem;
+        }
+
+        .search-box input:focus {
+            border-color: #6366f1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .history-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .history-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .history-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .history-card-header {
+            background: linear-gradient(135deg, #f3f4f6 0%, #f9fafb 100%);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .order-info {
+            flex: 1;
+        }
+
+        .order-id {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 1.1rem;
+        }
+
+        .order-date {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .order-total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #6366f1;
+            text-align: right;
+        }
+
+        .history-card-body {
+            padding: 1.5rem;
+        }
+
+        .history-items {
+            margin-bottom: 1.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .item-qty {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .item-subtotal {
+            font-weight: 600;
+            color: #6366f1;
+        }
+
+        .payment-info {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .payment-detail {
+            text-align: center;
+        }
+
+        .payment-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .payment-value {
+            font-size: 1rem;
+            color: #1f2937;
+            margin-top: 0.25rem;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-invoice {
+            background: #6366f1;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-invoice:hover {
+            background: #4f46e5;
+        }
+
+        .btn-download {
+            background: #10b981;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-download:hover {
+            background: #059669;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #6366f1;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state a:hover {
+            background: #4f46e5;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="container">
+            <h1 class="brand">My Casual</h1>
+            <nav class="nav">
+                <a href="index.html">Beranda</a>
+                <a href="index.html#produk">Produk</a>
+                <a href="customer-profile.html">Profil</a>
+            </nav>
+            <button class="cart-btn" id="openCart">
+                <i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="history-container">
+        <div class="history-header">
+            <h1>Riwayat Pembelian</h1>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cari Order ID...">
+            </div>
+        </div>
+
+        <div class="history-list" id="historyList">
+            <!-- History will be loaded here -->
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-history"></i>
+            <p>Belum ada riwayat pembelian</p>
+            <a href="index.html">Mulai Berbelanja</a>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000';
+        let allHistory = [];
+        let filteredHistory = [];
+
+        function fmt(n) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0
+            }).format(n);
+        }
+
+        function getStatusBadgeStyle(status) {
+            const styles = {
+                'pending': 'color: #854d0e; background: #fef08a;',
+                'settlement': 'color: #166534; background: #dcfce7;',
+                'capture': 'color: #166534; background: #dcfce7;',
+                'cancel': 'color: #991b1b; background: #fee2e2;',
+                'expire': 'color: #991b1b; background: #fee2e2;'
+            };
+            return styles[status] || 'color: #374151; background: #f3f4f6;';
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'pending': 'Pending',
+                'settlement': 'Selesai',
+                'capture': 'Selesai',
+                'cancel': 'Batal',
+                'expire': 'Kadaluarsa'
+            };
+            return labels[status] || status;
+        }
+
+        async function loadHistory() {
+            try {
+                const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+                if (!token || !user.id) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    allHistory = result.data || [];
+                    // Sort by date, newest first
+                    allHistory.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    filteredHistory = [...allHistory];
+                    renderHistory();
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (filteredHistory.length === 0) {
+                historyList.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            historyList.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            historyList.innerHTML = filteredHistory.map(order => `
+                <div class="history-card">
+                    <div class="history-card-header">
+                        <div class="order-info">
+                            <div class="order-id">#${order.orderId}</div>
+                            <div class="order-date">${new Date(order.createdAt).toLocaleString('id-ID')}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="order-total">${fmt(order.total)}</div>
+                            <div style="margin-top: 0.5rem; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600; display: inline-block; ${getStatusBadgeStyle(order.status)}">
+                                ${getStatusLabel(order.status)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="history-card-body">
+                        <div class="history-items">
+                            ${order.items.map(item => `
+                                <div class="history-item">
+                                    <div class="item-info">
+                                        <div class="item-name">${item.name}</div>
+                                        <div class="item-qty">Jumlah: ${item.quantity} × ${fmt(item.price)}</div>
+                                    </div>
+                                    <div class="item-subtotal">${fmt(item.price * item.quantity)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="payment-info">
+                            <div class="payment-detail">
+                                <div class="payment-label">Subtotal</div>
+                                <div class="payment-value">${fmt(order.subtotal)}</div>
+                            </div>
+                            ${order.discount > 0 ? `
+                                <div class="payment-detail">
+                                    <div class="payment-label">Diskon</div>
+                                    <div class="payment-value" style="color: #10b981;">-${fmt(order.discount)}</div>
+                                </div>
+                            ` : ''}
+                            <div class="payment-detail">
+                                <div class="payment-label">Total Bayar</div>
+                                <div class="payment-value" style="color: #6366f1; font-size: 1.25rem;">${fmt(order.total)}</div>
+                            </div>
+                            ${order.paymentType ? `
+                                <div class="payment-detail">
+                                    <div class="payment-label">Metode</div>
+                                    <div class="payment-value">${order.paymentType.replace(/_/g, ' ').toUpperCase()}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="history-actions">
+                            <button class="action-btn btn-invoice" onclick="showInvoice('${order.orderId}')">
+                                <i class="fas fa-receipt"></i> Lihat Invoice
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showInvoice(orderId) {
+            const order = filteredHistory.find(o => o.orderId === orderId);
+            if (!order) return;
+
+            const invoiceHTML = `
+                <div style="text-align: left; font-family: monospace; background: #f9fafb; padding: 2rem; border-radius: 8px; max-width: 400px; margin: 0 auto;">
+                    <div style="text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #6366f1; padding-bottom: 1rem;">
+                        <h3 style="margin: 0; color: #1f2937;">INVOICE</h3>
+                        <p style="margin: 0.5rem 0 0 0; color: #6b7280; font-size: 0.9rem;">My Casual Store</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="margin: 0.3rem 0;"><strong>Order ID:</strong> ${order.orderId}</p>
+                        <p style="margin: 0.3rem 0;"><strong>Tanggal:</strong> ${new Date(order.createdAt).toLocaleString('id-ID')}</p>
+                        <p style="margin: 0.3rem 0;"><strong>Status:</strong> <span style="padding: 0.1rem 0.5rem; border-radius: 4px; ${getStatusBadgeStyle(order.status)}">${getStatusLabel(order.status)}</span></p>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 1rem 0;">
+                        <p style="margin: 0.3rem 0;"><strong>Pembeli:</strong> ${order.customerName}</p>
+                        <p style="margin: 0.3rem 0;"><strong>Email:</strong> ${order.customerEmail}</p>
+                        <p style="margin: 0.3rem 0;"><strong>Telepon:</strong> ${order.customerPhone}</p>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="margin: 0.5rem 0; font-weight: bold; border-bottom: 1px solid #d1d5db;">DETAIL PEMBELIAN</p>
+                        ${order.items.map(item => `
+                            <div style="display: flex; justify-content: space-between; margin: 0.3rem 0; font-size: 0.9rem;">
+                                <span>${item.name} (x${item.quantity})</span>
+                                <span>${fmt(item.price * item.quantity)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin: 0.3rem 0;">
+                            <span>Subtotal:</span>
+                            <span>${fmt(order.subtotal)}</span>
+                        </div>
+                        ${order.discount > 0 ? `
+                            <div style="display: flex; justify-content: space-between; margin: 0.3rem 0; color: #10b981;">
+                                <span>Diskon:</span>
+                                <span>-${fmt(order.discount)}</span>
+                            </div>
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-weight: bold; font-size: 1.1rem; border-top: 1px solid #d1d5db; padding-top: 0.5rem;">
+                            <span>TOTAL:</span>
+                            <span style="color: #6366f1;">${fmt(order.total)}</span>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.85rem;">
+                        <p style="margin: 0.3rem 0;">Metode Pembayaran: ${order.paymentType ? order.paymentType.replace(/_/g, ' ').toUpperCase() : 'MIDTRANS'}</p>
+                        <p style="margin: 1rem 0 0 0; font-size: 0.8rem;">Terima kasih telah berbelanja</p>
+                    </div>
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'Invoice Pembelian',
+                html: invoiceHTML,
+                confirmButtonColor: '#6366f1',
+                confirmButtonText: 'Tutup'
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            filteredHistory = allHistory.filter(order =>
+                order.orderId.toLowerCase().includes(searchTerm)
+            );
+            renderHistory();
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+</body>
+
+</html>

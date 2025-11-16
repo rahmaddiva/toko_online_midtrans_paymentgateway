@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Toko Online</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Authentication Check Script -->
+    <script>
+        // Cek authentication sebelum halaman dimuat
+        (function () {
+            const token = localStorage.getItem('token');
+
+            // Jika tidak ada token, redirect ke login
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Verifikasi token dengan backend (opsional tapi recommended)
+            fetch('http://localhost:3000/api/auth/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Token tidak valid');
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    // Jika user bukan admin, redirect ke halaman utama
+                    if (result.data && result.data.role !== 'admin') {
+                        window.location.href = '/index.html';
+                        return;
+                    }
+                    // Token valid dan user adalah admin, lanjutkan load halaman
+                })
+                .catch(error => {
+                    console.error('Auth error:', error);
+                    // Token tidak valid, hapus dan redirect ke login
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+        })();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .admin-wrapper {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+            color: white;
+            padding: 2rem 1rem;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-nav button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-nav button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-nav button.active {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 2rem;
+            width: 220px;
+        }
+
+        .btn-logout-sidebar {
+            background: rgba(255, 59, 48, 0.8);
+            border: none;
+            color: white;
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .btn-logout-sidebar:hover {
+            background: rgba(255, 59, 48, 1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .topbar h2 {
+            font-size: 1.5rem;
+            color: #1f2937;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        /* Tabs */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-header h3 {
+            font-size: 1.5rem;
+            color: #1f2937;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #1f2937;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #2563eb;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+
+        .btn-view {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #059669;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 1rem;
+        }
+
+        .modal-header h4 {
+            font-size: 1.25rem;
+            color: #1f2937;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #1f2937;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            outline: none;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+        }
+
+        /* Search & Filter */
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input {
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 200px;
+            font-size: 1rem;
+        }
+
+        .search-bar input:focus {
+            border-color: #6366f1;
+            outline: none;
+        }
+
+        /* Status Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #0c4a6e;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: white;
+            border-radius: 12px;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 60px;
+                padding: 0.5rem 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+            }
+
+            .sidebar-logo {
+                margin-bottom: 0;
+            }
+
+            .sidebar-nav {
+                display: none;
+            }
+
+            .sidebar-footer {
+                display: none;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .table-responsive {
+                overflow-x: auto;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-crown"></i> Admin Panel
+            </div>
+            <nav class="sidebar-nav">
+                <button data-section="products" class="active">
+                    <i class="fas fa-box"></i> Produk
+                </button>
+                <button data-section="orders">
+                    <i class="fas fa-receipt"></i> Pesanan
+                </button>
+                <button data-section="users">
+                    <i class="fas fa-users"></i> Pengguna
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-logout-sidebar" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <h2 id="pageTitle">Manajemen Produk</h2>
+                <div class="user-profile">
+                    <span id="userName">Admin</span>
+                    <div class="avatar">A</div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Products Section -->
+                <section id="products" class="section active">
+                    <div class="section-header">
+                        <h3><i class="fas fa-box"></i> Manajemen Produk</h3>
+                        <button class="btn-primary" id="addProductBtn">
+                            <i class="fas fa-plus"></i> Tambah Produk
+                        </button>
+                    </div>
+
+                    <div class="search-bar">
+                        <input type="text" id="productSearch" placeholder="Cari produk...">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Produk</th>
+                                    <th>Harga</th>
+                                    <th>Kategori</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <tr>
+                                    <td colspan="5" class="empty-state">
+                                        <i class="fas fa-inbox"></i>
+                                        <p>Belum ada produk. Silakan tambah produk baru.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Orders Section -->
+                <section id="orders" class="section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-receipt"></i> Manajemen Pesanan</h3>
+                    </div>
+
+                    <div class="search-bar">
+                        <input type="text" id="orderSearch" placeholder="Cari pesanan...">
+                        <select id="orderStatusFilter">
+                            <option value="">Semua Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Sedang Diproses</option>
+                            <option value="shipped">Dikirim</option>
+                            <option value="completed">Selesai</option>
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>ID Pesanan</th>
+                                    <th>Pelanggan</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Tanggal</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="7" class="empty-state">
+                                        <i class="fas fa-inbox"></i>
+                                        <p>Belum ada pesanan.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="users" class="section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-users"></i> Manajemen Pengguna</h3>
+                        <button class="btn-primary" id="addUserBtn">
+                            <i class="fas fa-plus"></i> Tambah Pengguna
+                        </button>
+                    </div>
+
+                    <div class="search-bar">
+                        <input type="text" id="userSearch" placeholder="Cari pengguna...">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6" class="empty-state">
+                                        <i class="fas fa-inbox"></i>
+                                        <p>Belum ada pengguna.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 id="productModalTitle">Tambah Produk</h4>
+                <button class="modal-close" onclick="closeProductModal()">&times;</button>
+            </div>
+            <form id="productForm">
+                <div class="form-group">
+                    <label for="productName">Nama Produk *</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Harga (Rp) *</label>
+                    <input type="number" id="productPrice" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">Kategori *</label>
+                    <input type="text" id="productCategory" required>
+                </div>
+                <div class="form-group">
+                    <label for="productImage">URL Gambar</label>
+                    <input type="url" id="productImage">
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Deskripsi</label>
+                    <textarea id="productDescription"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeProductModal()">Batal</button>
+                    <button type="submit" class="btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 id="userModalTitle">Tambah Pengguna</h4>
+                <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            </div>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="userName">Nama *</label>
+                    <input type="text" id="userName" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email *</label>
+                    <input type="email" id="userEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPassword">Password *</label>
+                    <input type="password" id="userPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPhone">Nomor Telepon</label>
+                    <input type="tel" id="userPhone">
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role *</label>
+                    <select id="userRole" required>
+                        <option value="customer">Customer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userStatus">Status Aktif</label>
+                    <select id="userStatus">
+                        <option value="1">Aktif</option>
+                        <option value="0">Tidak Aktif</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeUserModal()">Batal</button>
+                    <button type="submit" class="btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Detail Pesanan</h4>
+                <button class="modal-close" onclick="closeOrderModal()">&times;</button>
+            </div>
+            <div id="orderDetail"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeOrderModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000';
+        let currentEditId = null;
+        let currentEditType = null;
+
+        // ==================== Navigation ====================
+        document.querySelectorAll('[data-section]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const section = btn.dataset.section;
+                showSection(section);
+            });
+        });
+
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+
+            document.querySelectorAll('[data-section]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-section="${section}"]`).classList.add('active');
+
+            const titles = {
+                products: 'Manajemen Produk',
+                orders: 'Manajemen Pesanan',
+                users: 'Manajemen Pengguna'
+            };
+            document.getElementById('pageTitle').textContent = titles[section];
+
+            if (section === 'products') loadProducts();
+            if (section === 'orders') loadOrders();
+            if (section === 'users') loadUsers();
+        }
+
+        // ==================== Products ====================
+        document.getElementById('addProductBtn').addEventListener('click', () => {
+            currentEditId = null;
+            currentEditType = 'add';
+            document.getElementById('productForm').reset();
+            document.getElementById('productModalTitle').textContent = 'Tambah Produk';
+            openProductModal();
+        });
+
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('productName').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value,
+                img: document.getElementById('productImage').value,
+                description: document.getElementById('productDescription').value
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                let url = `${API_BASE_URL}/api/products`;
+                let method = 'POST';
+
+                if (currentEditId) {
+                    url += `/${currentEditId}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('Berhasil!', currentEditId ? 'Produk diperbarui' : 'Produk ditambahkan', 'success');
+                    closeProductModal();
+                    loadProducts();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Terjadi kesalahan', 'error');
+            }
+        });
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/products`);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayProducts(result.data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayProducts(products) {
+            const tbody = document.getElementById('productsTableBody');
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada produk.</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = products.map((product, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${product.name}</td>
+                    <td>Rp${product.price.toLocaleString('id-ID')}</td>
+                    <td>${product.category}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-sm btn-edit" onclick="editProduct(${product.id})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-sm btn-delete" onclick="deleteProduct(${product.id})">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editProduct(id) {
+            // Find product and populate form
+            fetch(`${API_BASE_URL}/api/products/${id}`)
+                .then(r => r.json())
+                .then(result => {
+                    if (result.success) {
+                        const product = result.data;
+                        currentEditId = id;
+                        currentEditType = 'edit';
+                        document.getElementById('productName').value = product.name;
+                        document.getElementById('productPrice').value = product.price;
+                        document.getElementById('productCategory').value = product.category;
+                        document.getElementById('productImage').value = product.img || '';
+                        document.getElementById('productDescription').value = product.description || '';
+                        document.getElementById('productModalTitle').textContent = 'Edit Produk';
+                        openProductModal();
+                    }
+                });
+        }
+
+        async function deleteProduct(id) {
+            const confirm = await Swal.fire({
+                title: 'Hapus Produk?',
+                text: 'Tindakan ini tidak bisa dibatalkan',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Hapus',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('Berhasil!', 'Produk dihapus', 'success');
+                    loadProducts();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Terjadi kesalahan', 'error');
+            }
+        }
+
+        function openProductModal() {
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.remove('active');
+        }
+
+        // ==================== Orders ====================
+        async function loadOrders() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayOrders(result.data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayOrders(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada pesanan.</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = orders.map((order, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>#${order.id}</td>
+                    <td>${order.User?.name || 'Unknown'}</td>
+                    <td>Rp${order.totalPrice.toLocaleString('id-ID')}</td>
+                    <td><span class="badge badge-${getStatusClass(order.status)}">${order.status}</span></td>
+                    <td>${new Date(order.createdAt).toLocaleDateString('id-ID')}</td>
+                    <td>
+                        <button class="btn-sm btn-view" onclick="viewOrder(${order.id})">
+                            <i class="fas fa-eye"></i> Lihat
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'pending': 'pending',
+                'processing': 'info',
+                'shipped': 'info',
+                'completed': 'success'
+            };
+            return classes[status] || 'pending';
+        }
+
+        function viewOrder(id) {
+            // Fetch order detail
+            fetch(`${API_BASE_URL}/api/orders/${id}`)
+                .then(r => r.json())
+                .then(result => {
+                    if (result.success) {
+                        const order = result.data;
+                        const detail = document.getElementById('orderDetail');
+                        detail.innerHTML = `
+                            <div style="margin-bottom: 1rem;">
+                                <p><strong>ID Pesanan:</strong> #${order.id}</p>
+                                <p><strong>Pelanggan:</strong> ${order.User?.name || 'Unknown'}</p>
+                                <p><strong>Email:</strong> ${order.User?.email || 'Unknown'}</p>
+                                <p><strong>Total:</strong> Rp${order.totalPrice.toLocaleString('id-ID')}</p>
+                                <p><strong>Status:</strong> <span class="badge badge-${getStatusClass(order.status)}">${order.status}</span></p>
+                                <p><strong>Tanggal:</strong> ${new Date(order.createdAt).toLocaleDateString('id-ID')}</p>
+                            </div>
+                        `;
+                        openOrderModal();
+                    }
+                });
+        }
+
+        function openOrderModal() {
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        // ==================== Users ====================
+        document.getElementById('addUserBtn').addEventListener('click', () => {
+            currentEditId = null;
+            currentEditType = 'add';
+            document.getElementById('userForm').reset();
+            document.getElementById('userModalTitle').textContent = 'Tambah Pengguna';
+            openUserModal();
+        });
+
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                password: document.getElementById('userPassword').value,
+                phone: document.getElementById('userPhone').value,
+                role: document.getElementById('userRole').value,
+                isActive: parseInt(document.getElementById('userStatus').value)
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                let url = `${API_BASE_URL}/api/auth/register`;
+                let method = 'POST';
+
+                if (currentEditId) {
+                    url = `${API_BASE_URL}/api/users/${currentEditId}`;
+                    method = 'PUT';
+                    delete data.password;
+                }
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('Berhasil!', currentEditId ? 'Pengguna diperbarui' : 'Pengguna ditambahkan', 'success');
+                    closeUserModal();
+                    loadUsers();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Terjadi kesalahan', 'error');
+            }
+        });
+
+        async function loadUsers() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayUsers(result.data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada pengguna.</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map((user, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td><span class="badge badge-info">${user.role}</span></td>
+                    <td><span class="badge ${user.isActive ? 'badge-success' : 'badge-danger'}">${user.isActive ? 'Aktif' : 'Tidak Aktif'}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-sm btn-edit" onclick="editUser(${user.id})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn-sm btn-delete" onclick="deleteUser(${user.id})">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editUser(id) {
+            // Find user and populate form
+            fetch(`${API_BASE_URL}/api/users/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                credentials: 'include'
+            })
+                .then(r => r.json())
+                .then(result => {
+                    if (result.success) {
+                        const user = result.data;
+                        currentEditId = id;
+                        currentEditType = 'edit';
+                        document.getElementById('userName').value = user.name;
+                        document.getElementById('userEmail').value = user.email;
+                        document.getElementById('userPhone').value = user.phone;
+                        document.getElementById('userRole').value = user.role;
+                        document.getElementById('userStatus').value = user.isActive ? 1 : 0;
+                        document.getElementById('userPassword').parentElement.style.display = 'none';
+                        document.getElementById('userModalTitle').textContent = 'Edit Pengguna';
+                        openUserModal();
+                    }
+                });
+        }
+
+        async function deleteUser(id) {
+            const confirm = await Swal.fire({
+                title: 'Hapus Pengguna?',
+                text: 'Tindakan ini tidak bisa dibatalkan',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Hapus',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('Berhasil!', 'Pengguna dihapus', 'success');
+                    loadUsers();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Terjadi kesalahan', 'error');
+            }
+        }
+
+        function openUserModal() {
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
+            document.getElementById('userPassword').parentElement.style.display = 'block';
+        }
+
+        // ==================== Logout ====================
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.removeItem('token');
+                    Swal.fire({
+                        title: 'Logout Berhasil!',
+                        text: 'Anda telah berhasil keluar.',
+                        icon: 'success',
+                        timer: 1500,
+                        timerProgressBar: true,
+                        didClose: () => {
+                            window.location.href = '/login.html';
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        // Load initial data
+        loadProducts();
+    </script>
+</body>
+
+</html>

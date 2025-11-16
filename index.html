@@ -27,11 +27,56 @@
         <a href="#" class="active">Beranda</a>
         <a href="#produk">Produk</a>
         <a href="#kontak">Kontak</a>
-        <a href="histori.html">History Pembelian</a>
+
+
       </nav>
-      <button class="cart-btn" id="openCart" aria-label="Buka Keranjang">
-        <i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span>
-      </button>
+      <div class="header-actions">
+        <button class="cart-btn" id="openCart" aria-label="Buka Keranjang">
+          <i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span>
+        </button>
+
+        <!-- Customer Profile Section -->
+        <div class="customer-profile" id="customerProfile" style="display: none;">
+          <button class="profile-btn" id="profileMenuBtn" aria-label="Menu Profil">
+            <div class="profile-avatar" id="profileAvatar">
+              <i class="fas fa-user"></i>
+            </div>
+          </button>
+
+          <!-- Profile Dropdown Menu -->
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-header">
+              <div class="profile-avatar-lg" id="profileAvatarLg">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="profile-info">
+                <h4 id="profileName">Customer</h4>
+                <p id="profileEmail">email@example.com</p>
+              </div>
+            </div>
+            <div class="profile-menu">
+              <a href="customer-profile.html" class="profile-menu-item">
+                <i class="fas fa-user-circle"></i> Profil
+              </a>
+              <a href="customer-orders.html" class="profile-menu-item">
+                <i class="fas fa-clipboard-list"></i> Pesanan Saya
+              </a>
+              <a href="customer-history.html" class="profile-menu-item">
+                <i class="fas fa-history"></i> Riwayat Pembelian
+              </a>
+              <hr>
+              <button id="logoutBtn" class="profile-menu-item logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Login Link untuk non-customer -->
+        <a href="login.html" id="loginLink" class="btn-login">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+      </div>
     </div>
   </header>
 

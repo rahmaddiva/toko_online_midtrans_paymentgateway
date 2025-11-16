@@ -1,87 +1,63 @@
-// --- IMPOR DEPENDENSI ---
+const express = require("express");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
 
-// Mengimpor modul-modul yang diperlukan
-const express = require('express'); // Framework web untuk Node.js
-const cors = require('cors');       // Middleware untuk mengaktifkan Cross-Origin Resource Sharing
-const bodyParser = require('body-parser'); // Middleware untuk mem-parsing body permintaan
-require('dotenv').config();         // Memuat variabel lingkungan dari file .env
+const { connectDB } = require("./src/config/database");
+const errorHandler = require("./src/middleware/errorHandler");
 
-// Mengimpor rute dan middleware kustom
-const paymentRoutes = require('./src/routes/paymentRoutes'); // Rute untuk fungsionalitas pembayaran
-const errorHandler = require('./src/middleware/errorHandler'); // Middleware untuk penanganan error global
+// Import routes
+const authRoutes = require("./src/routes/authRoutes");
+const productRoutes = require("./src/routes/productRoutes");
+const orderRoutes = require("./src/routes/orderRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
+const userRoutes = require("./src/routes/userRoutes");
 
-// --- INISIALISASI APLIKASI ---
+const app = express();
 
-const app = express(); // Membuat instance aplikasi Express
-const PORT = process.env.PORT || 3000; // Menentukan port server, default ke 3000 jika tidak ada di .env
+// Middleware
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5500",
+      "http://127.0.0.1:5500",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost",
+      "http://127.0.0.1",
+    ],
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// --- MIDDLEWARE ---
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/users", userRoutes);
 
-// Mengaktifkan CORS dengan konfigurasi dari variabel lingkungan
-app.use(cors({
-  origin: process.env.CORS_ORIGIN.split(','), // Mengizinkan permintaan dari origin yang ditentukan
-  credentials: true // Mengizinkan pengiriman cookie
-}));
-
-// Middleware untuk mem-parsing body permintaan JSON dan URL-encoded
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// Middleware sederhana untuk mencatat (log) setiap permintaan yang masuk
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-  next(); // Lanjutkan ke middleware atau handler berikutnya
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({ success: true, message: "Server is running" });
 });
 
-// --- RUTE (ROUTES) ---
-
-// Rute utama (root) untuk memberikan informasi status API
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Fashion Store API is running',
-    version: '1.0.0',
-    endpoints: {
-      createTransaction: 'POST /api/payment/create-transaction',
-      notification: 'POST /api/payment/notification',
-      checkStatus: 'GET /api/payment/status/:orderId',
-      cancelTransaction: 'POST /api/payment/cancel/:orderId'
-    }
-  });
-});
-
-// Menggunakan rute pembayaran yang telah diimpor dengan prefix /api/payment
-app.use('/api/payment', paymentRoutes);
-
-// --- PENANGANAN ERROR ---
-
-// Handler untuk rute yang tidak ditemukan (404 Not Found)
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Endpoint not found'
-  });
-});
-
-// Middleware penanganan error global. Akan menangkap semua error yang terjadi di aplikasi.
+// Error handler (harus di akhir)
 app.use(errorHandler);
 
-// --- MEMULAI SERVER ---
+const PORT = process.env.PORT || 3000;
 
-// Menjalankan server pada port yang telah ditentukan
-app.listen(PORT, () => {
-  console.log('=================================');
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}`);
-  console.log(`💳 Midtrans Mode: ${process.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'Production' : 'Sandbox'}`);
-  console.log('=================================');
-});
-
-// --- PENANGANAN PROMISE REJECTION ---
-
-// Menangani promise rejection yang tidak tertangkap untuk mencegah crash
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err);
-  process.exit(1); // Keluar dari proses dengan status error
-});
+// Connect to database and start server
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to database:", err);
+    process.exit(1);
+  });

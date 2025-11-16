@@ -1,123 +1,11 @@
 // --- KONFIGURASI DAN DATA ---
 
-// Data Produk - Daftar item fashion/pakaian
-const PRODUCTS = [
-  {
-    id: 1,
-    name: "Kemeja Kasual Pria",
-    price: 189000,
-    img: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&q=80",
-    category: "Pria",
-  },
-  {
-    id: 2,
-    name: "Dress Casual Wanita",
-    price: 245000,
-    img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&q=80",
-    category: "Wanita",
-  },
-  {
-    id: 3,
-    name: "Jaket Denim Klasik",
-    price: 320000,
-    img: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&q=80",
-    category: "Unisex",
-  },
-  {
-    id: 4,
-    name: "Kaos Polos Premium",
-    price: 125000,
-    img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80",
-    category: "Unisex",
-  },
-  {
-    id: 5,
-    name: "Celana Jeans Slim Fit",
-    price: 275000,
-    img: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&q=80",
-    category: "Pria",
-  },
-  {
-    id: 6,
-    name: "Blouse Elegan",
-    price: 198000,
-    img: "https://images.unsplash.com/photo-1618932260643-eee4a2f652a6?w=500&q=80",
-    category: "Wanita",
-  },
-  {
-    id: 7,
-    name: "Sweater Rajut",
-    price: 215000,
-    img: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&q=80",
-    category: "Unisex",
-  },
-  {
-    id: 8,
-    name: "Rok Mini Modern",
-    price: 165000,
-    img: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=500&q=80",
-    category: "Wanita",
-  },
-  {
-    id: 9,
-    name: "Hoodie Streetwear",
-    price: 289000,
-    img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500&q=80",
-    category: "Unisex",
-  },
-  {
-    id: 10,
-    name: "Kemeja Flanel",
-    price: 175000,
-    img: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80",
-    category: "Pria",
-  },
-  {
-    id: 11,
-    name: "Cardigan Wanita",
-    price: 235000,
-    img: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&q=80",
-    category: "Wanita",
-  },
-  {
-    id: 12,
-    name: "Celana Chino",
-    price: 265000,
-    img: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=500&q=80",
-    category: "Pria",
-  },
-  {
-    id: 13,
-    name: "Jumpsuit Casual",
-    price: 315000,
-    img: "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=500&q=80",
-    category: "Wanita",
-  },
-  {
-    id: 14,
-    name: "Bomber Jacket",
-    price: 385000,
-    img: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&q=80",
-    category: "Unisex",
-  },
-  {
-    id: 15,
-    name: "Polo Shirt Premium",
-    price: 155000,
-    img: "https://images.unsplash.com/photo-1626497764746-6dc36546b388?w=500&q=80",
-    category: "Pria",
-  },
-  {
-    id: 16,
-    name: "Tunik Batik Modern",
-    price: 225000,
-    img: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500&q=80",
-    category: "Wanita",
-  },
-];
+// Data Produk - akan diisi dari API
+let PRODUCTS = [];
 
 // Konfigurasi URL API backend untuk pembayaran
 const API_URL = "http://localhost:3000/api/payment";
+const API_BASE_URL = "http://localhost:3000";
 
 // --- FUNGSI BANTU ---
 
@@ -130,6 +18,30 @@ const fmt = (n) =>
   }).format(n);
 // Fungsi shortcut untuk memilih elemen DOM menggunakan selector CSS
 const $ = (sel) => document.querySelector(sel);
+
+// Fungsi untuk load produk dari API
+async function loadProductsFromAPI() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/products`);
+    const result = await response.json();
+
+    if (result.success) {
+      PRODUCTS = result.data;
+      console.log(
+        "Produk berhasil dimuat dari API:",
+        PRODUCTS.length,
+        "produk"
+      );
+    } else {
+      console.warn(
+        "Gagal load produk dari API, gunakan data default atau ulangi"
+      );
+    }
+  } catch (error) {
+    console.error("Error loading products from API:", error);
+    console.warn("Menggunakan data produk default atau ulangi load");
+  }
+}
 
 // --- ELEMEN DOM ---
 
@@ -403,10 +315,17 @@ async function applyCoupon() {
  */
 async function getSnapToken(transactionData) {
   try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login terlebih dahulu.");
+    }
+
     const response = await fetch(`${API_URL}/create-transaction`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(transactionData),
     });
@@ -570,6 +489,26 @@ function closeCart() {
  */
 async function checkout() {
   const items = readCart();
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // Validasi customer login
+  if (!token || !user.id) {
+    Swal.fire({
+      icon: "warning",
+      title: "Harus Login",
+      text: "Silakan login terlebih dahulu untuk melakukan pemesanan",
+      confirmButtonColor: "#6366f1",
+      showCancelButton: true,
+      confirmButtonText: "Login",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "/login.html";
+      }
+    });
+    return;
+  }
 
   if (items.length === 0) {
     // Jika keranjang kosong, tampilkan peringatan
@@ -588,20 +527,35 @@ async function checkout() {
     ? Math.max(0, subtotal - appliedCoupon.discount)
     : subtotal;
 
-  // Menampilkan modal untuk mengisi informasi pembeli
+  // Pre-fill form dengan data customer yang login
+  const defaultName = user.name || "";
+  const defaultEmail = user.email || "";
+  const defaultPhone = user.phone || "";
+
+  // Menampilkan modal untuk konfirmasi pembayaran
   const { value: formValues } = await Swal.fire({
-    title: "Informasi Pembeli",
+    title: "Konfirmasi Pembayaran",
     html: `
       <div style="text-align:left;margin:1rem 0;">
         <p style="margin:0.5rem 0;"><strong>Total Item:</strong> ${itemCount} pcs</p>
-        <p style="margin:0.5rem 0;"><strong>Total Harga:</strong> ${fmt(
+        <p style="margin:0.5rem 0;"><strong>Subtotal:</strong> ${fmt(
+          subtotal
+        )}</p>
+        ${
+          appliedCoupon
+            ? `<p style="margin:0.5rem 0;color:#10b981;"><strong>Diskon:</strong> -${fmt(
+                appliedCoupon.discount
+              )}</p>`
+            : ""
+        }
+        <p style="margin:0.5rem 0;border-top:1px solid #e5e7eb;padding-top:0.5rem;"><strong>Total Pembayaran:</strong> ${fmt(
           finalTotal
         )}</p>
       </div>
       <div style="margin-top:1.5rem;">
-        <input id="name" class="swal2-input" placeholder="Nama Lengkap" required>
-        <input id="email" class="swal2-input" placeholder="Email" type="email" required>
-        <input id="phone" class="swal2-input" placeholder="No. Telepon" required>
+        <input id="name" class="swal2-input" placeholder="Nama Lengkap" value="${defaultName}" required>
+        <input id="email" class="swal2-input" placeholder="Email" type="email" value="${defaultEmail}" required>
+        <input id="phone" class="swal2-input" placeholder="No. Telepon" value="${defaultPhone}" required>
       </div>
     `,
     focusConfirm: false,
@@ -645,8 +599,16 @@ async function checkout() {
       },
     });
 
+    // Generate Order ID unik
+    const generateOrderId = () => {
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000);
+      return `ORDER-${timestamp}-${random}`;
+    };
+
     // Siapkan data transaksi untuk dikirim ke backend
     const transactionData = {
+      orderId: generateOrderId(), // Generate order ID unik untuk setiap transaksi
       amount: subtotal, // Kirim subtotal, biarkan backend menghitung diskon
       items: items.map((item) => ({
         id: item.id,
@@ -672,29 +634,33 @@ async function checkout() {
 
     // Buka halaman pembayaran Midtrans Snap
     window.snap.pay(snapToken, {
-      onSuccess: function (result) {
+      onSuccess: async function (result) {
         // Callback saat pembayaran sukses
         console.log("Pembayaran sukses:", result);
+
+        // Update order status di backend
+        try {
+          const token = localStorage.getItem("token");
+          await fetch(`${API_BASE_URL}/api/payment/status/${result.order_id}`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: "settlement",
+              paymentType: result.payment_type,
+            }),
+          });
+        } catch (error) {
+          console.error("Error updating order status:", error);
+        }
+
         saveTransactionToHistory(result, finalTotal, items, appliedCoupon);
+        showInvoice(result, finalTotal, items, formValues, appliedCoupon);
         saveCart([]); // Kosongkan keranjang
         renderCart();
         closeCart();
-        Swal.fire({
-          icon: "success",
-          title: "Pembayaran Berhasil!",
-          html: `
-            <p>Terima kasih atas pembelian Anda</p>
-            <p style="color:#6b7280;font-size:0.9rem;margin-top:1rem;">Order ID: ${
-              result.order_id
-            }</p>
-            <p style="color:#6b7280;font-size:0.9rem;">Total: ${fmt(
-              finalTotal
-            )}</p>
-            <p style="color:#6b7280;font-size:0.9rem;">Pesanan akan segera diproses</p>
-          `,
-          confirmButtonColor: "#6366f1",
-          confirmButtonText: "OK",
-        });
       },
       onPending: function (result) {
         // Callback saat pembayaran tertunda
@@ -748,6 +714,113 @@ async function checkout() {
 }
 
 /**
+ * Helper function untuk mengubah transaction status menjadi label yang readable
+ */
+function getStatusLabel(transactionStatus) {
+  const statusMap = {
+    settlement: "Selesai",
+    capture: "Selesai",
+    pending: "Pending",
+    cancel: "Dibatalkan",
+    expire: "Kadaluarsa",
+    deny: "Ditolak",
+  };
+  return statusMap[transactionStatus] || transactionStatus.toUpperCase();
+}
+
+/**
+ * Menampilkan invoice pemesanan
+ */
+function showInvoice(result, total, items, customer, coupon) {
+  const invoiceHTML = `
+    <div style="text-align: left; font-family: monospace; background: #f9fafb; padding: 2rem; border-radius: 8px; max-width: 400px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #6366f1; padding-bottom: 1rem;">
+        <h3 style="margin: 0; color: #1f2937;">INVOICE</h3>
+        <p style="margin: 0.5rem 0 0 0; color: #6b7280; font-size: 0.9rem;">My Casual Store</p>
+      </div>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <p style="margin: 0.3rem 0;"><strong>Order ID:</strong> ${
+          result.order_id
+        }</p>
+        <p style="margin: 0.3rem 0;"><strong>Tanggal:</strong> ${new Date().toLocaleString(
+          "id-ID"
+        )}</p>
+      </div>
+
+      <div style="margin-bottom: 1.5rem; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 1rem 0;">
+        <p style="margin: 0.3rem 0;"><strong>Nama:</strong> ${customer.name}</p>
+        <p style="margin: 0.3rem 0;"><strong>Email:</strong> ${
+          customer.email
+        }</p>
+        <p style="margin: 0.3rem 0;"><strong>Telepon:</strong> ${
+          customer.phone
+        }</p>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <p style="margin: 0.5rem 0; font-weight: bold; border-bottom: 1px solid #d1d5db;">DETAIL PEMBELIAN</p>
+        ${items
+          .map(
+            (item) => `
+          <div style="display: flex; justify-content: space-between; margin: 0.3rem 0; font-size: 0.9rem;">
+            <span>${item.name} (x${item.qty})</span>
+            <span>${fmt(item.price * item.qty)}</span>
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+
+      <div style="margin-bottom: 1.5rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin: 0.3rem 0;">
+          <span>Subtotal:</span>
+          <span>${fmt(
+            items.reduce((sum, it) => sum + it.price * it.qty, 0)
+          )}</span>
+        </div>
+        ${
+          coupon
+            ? `
+          <div style="display: flex; justify-content: space-between; margin: 0.3rem 0; color: #10b981;">
+            <span>Diskon (${coupon.code}):</span>
+            <span>-${fmt(coupon.discount)}</span>
+          </div>
+        `
+            : ""
+        }
+        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-weight: bold; font-size: 1.1rem; border-top: 1px solid #d1d5db; padding-top: 0.5rem;">
+          <span>TOTAL:</span>
+          <span style="color: #6366f1;">${fmt(total)}</span>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.85rem;">
+        <p style="margin: 0.3rem 0;">Status: <span style="color: #10b981; font-weight: bold;">${getStatusLabel(
+          result.transaction_status
+        )}</span></p>
+        <p style="margin: 0.3rem 0;">Metode Pembayaran: ${
+          result.payment_type
+            ? result.payment_type.replace(/_/g, " ").toUpperCase()
+            : "MIDTRANS"
+        }</p>
+        <p style="margin: 1rem 0 0 0; font-size: 0.8rem;">Terima kasih telah berbelanja</p>
+      </div>
+    </div>
+  `;
+
+  Swal.fire({
+    title: "Pembayaran Berhasil!",
+    html: invoiceHTML,
+    icon: "success",
+    confirmButtonColor: "#6366f1",
+    confirmButtonText: "Tutup",
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  });
+}
+
+/**
  * Menyimpan data transaksi ke localStorage.
  * @param {object} result - Objek hasil dari Midtrans.
  * @param {number} total - Total harga transaksi.
@@ -769,6 +842,106 @@ function saveTransactionToHistory(result, total, cartItems, coupon) {
   localStorage.setItem("purchaseHistory", JSON.stringify(history));
 }
 
+// --- CUSTOMER PROFILE MANAGEMENT ---
+
+/**
+ * Initialize customer profile dari localStorage
+ */
+function initializeCustomerProfile() {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const customerProfile = document.getElementById("customerProfile");
+  const loginLink = document.getElementById("loginLink");
+  const profileMenuBtn = document.getElementById("profileMenuBtn");
+  const profileDropdown = document.getElementById("profileDropdown");
+
+  if (token && user.id && user.role === "customer") {
+    // Show customer profile
+    if (customerProfile) customerProfile.style.display = "flex";
+    if (loginLink) loginLink.style.display = "none";
+
+    // Update profile info
+    const profileName = document.getElementById("profileName");
+    const profileEmail = document.getElementById("profileEmail");
+
+    if (profileName) profileName.textContent = user.name;
+    if (profileEmail) profileEmail.textContent = user.email;
+
+    // Profile menu toggle
+    if (profileMenuBtn) {
+      profileMenuBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (profileDropdown) {
+          profileDropdown.classList.toggle("active");
+        }
+      });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (
+        profileDropdown &&
+        !profileDropdown.contains(e.target) &&
+        e.target !== profileMenuBtn
+      ) {
+        profileDropdown.classList.remove("active");
+      }
+    });
+
+    // Logout handler
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", handleCustomerLogout);
+    }
+  } else {
+    // Show login link
+    if (customerProfile) customerProfile.style.display = "none";
+    if (loginLink) loginLink.style.display = "block";
+  }
+}
+
+/**
+ * Handle customer logout
+ */
+async function handleCustomerLogout() {
+  try {
+    const token = localStorage.getItem("token");
+
+    // Call logout endpoint
+    await fetch("http://localhost:3000/api/auth/logout", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    // Clear localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    Swal.fire({
+      icon: "success",
+      title: "Logout Berhasil",
+      text: "Anda telah keluar dari akun",
+      timer: 1500,
+      showConfirmButton: false,
+    }).then(() => {
+      window.location.href = "/login.html";
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    // Force logout anyway
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login.html";
+  }
+}
+
+// --- END CUSTOMER PROFILE MANAGEMENT ---
+
 // --- INISIALISASI ---
 
 // Membuat fungsi global yang bisa diakses dari atribut `onclick` di HTML
@@ -784,7 +957,13 @@ window.decrease = (id) => {
 };
 
 // Menjalankan kode setelah seluruh konten halaman dimuat
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Load produk dari API terlebih dahulu
+  await loadProductsFromAPI();
+
+  // Initialize customer profile
+  initializeCustomerProfile();
+
   // Render awal
   renderProducts();
   renderCart();
