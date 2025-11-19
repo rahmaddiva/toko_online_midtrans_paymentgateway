@@ -1,4 +1,5 @@
 const { Order, User } = require("../models");
+const { sendEmail } = require("../utils/emailSender");
 
 // @desc    Get user's orders
 // @route   GET /api/orders/my-orders
@@ -93,6 +94,34 @@ exports.getOrder = async (req, res, next) => {
   }
 };
 
+// Helper: Kirim email notifikasi status order
+async function sendOrderStatusEmail(order, statusText) {
+  if (!order.customerEmail) return;
+  const subject = `Status Order #${order.orderId}: ${statusText}`;
+  const html = `
+    <h3>Halo ${order.customerName},</h3>
+    <p>Status pesanan Anda dengan Order ID <b>${
+      order.orderId
+    }</b> telah diperbarui menjadi: <b>${statusText}</b>.</p>
+    <ul>
+      <li><b>Total:</b> Rp${Number(order.total).toLocaleString("id-ID")}</li>
+      <li><b>Metode Pembayaran:</b> ${order.paymentType || "-"}</li>
+    </ul>
+    <p>Terima kasih telah berbelanja di My Casual Store.</p>
+    <hr>
+    <small>Email ini dikirim otomatis, mohon tidak membalas.</small>
+  `;
+  try {
+    await sendEmail({
+      to: order.customerEmail,
+      subject,
+      html,
+    });
+  } catch (e) {
+    console.error("Gagal mengirim email notifikasi order:", e);
+  }
+}
+
 // @desc    Cancel order
 // @route   DELETE /api/orders/:orderId
 // @access  Private
@@ -127,6 +156,9 @@ exports.cancelOrder = async (req, res, next) => {
 
     // Hapus order dari database
     await order.destroy();
+
+    // Kirim email notifikasi pembatalan
+    await sendOrderStatusEmail(order, "Dibatalkan");
 
     res.status(200).json({
       success: true,

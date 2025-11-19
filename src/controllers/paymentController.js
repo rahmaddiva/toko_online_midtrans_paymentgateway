@@ -1,5 +1,33 @@
 const { snap, coreApi } = require("../config/midtrans");
 const { Order } = require("../models");
+const { sendEmail } = require("../utils/emailSender");
+// Helper: Kirim email notifikasi status order
+async function sendOrderStatusEmail(order, statusText) {
+  if (!order.customerEmail) return;
+  const subject = `Status Order #${order.orderId}: ${statusText}`;
+  const html = `
+    <h3>Halo ${order.customerName},</h3>
+    <p>Status pesanan Anda dengan Order ID <b>${
+      order.orderId
+    }</b> telah diperbarui menjadi: <b>${statusText}</b>.</p>
+    <ul>
+      <li><b>Total:</b> Rp${Number(order.total).toLocaleString("id-ID")}</li>
+      <li><b>Metode Pembayaran:</b> ${order.paymentType || "-"}</li>
+    </ul>
+    <p>Terima kasih telah berbelanja di My Casual Store.</p>
+    <hr>
+    <small>Email ini dikirim otomatis, mohon tidak membalas.</small>
+  `;
+  try {
+    await sendEmail({
+      to: order.customerEmail,
+      subject,
+      html,
+    });
+  } catch (e) {
+    console.error("Gagal mengirim email notifikasi order:", e);
+  }
+}
 
 // --- DATABASE KUPON SEDERHANA ---
 const COUPONS = {
@@ -119,13 +147,29 @@ exports.createTransaction = async (req, res, next) => {
       }
     }
 
-    // Jika order belum ada, buat parameter transaksi baru
+    // Jika ada diskon, tambahkan item diskon negatif ke item_details
+    let itemDetails = [...items];
+    if (discount && Number(discount) > 0) {
+      itemDetails.push({
+        id: "DISKON",
+        name: couponCode ? `Diskon (${couponCode})` : "Diskon",
+        price: -Math.abs(Number(discount)),
+        quantity: 1,
+      });
+    }
+
+    // Hitung ulang gross_amount agar pasti sama dengan total item_details
+    const calculatedGross = itemDetails.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
     const parameter = {
       transaction_details: {
         order_id: finalOrderId,
-        gross_amount: gross_amount,
+        gross_amount: calculatedGross,
       },
-      item_details: items,
+      item_details: itemDetails,
       customer_details: customer,
       callbacks: {
         finish: "http://localhost:5500/payment-success.html",
@@ -139,7 +183,7 @@ exports.createTransaction = async (req, res, next) => {
 
     // Simpan order ke database hanya jika belum ada
     if (userId && !existingOrder) {
-      await Order.create({
+      const newOrder = await Order.create({
         orderId: finalOrderId,
         userId: userId,
         items: items,
@@ -152,6 +196,8 @@ exports.createTransaction = async (req, res, next) => {
         customerEmail: customer.email,
         customerPhone: customer.phone,
       });
+      // Kirim email notifikasi order dibuat (pending)
+      await sendOrderStatusEmail(newOrder, "Menunggu Pembayaran");
     }
 
     console.log("Transaction created:", {
@@ -245,15 +291,30 @@ exports.paymentNotification = async (req, res, next) => {
 
     if (order) {
       let newStatus = transactionStatus;
+      let statusText = transactionStatus;
 
       if (transactionStatus === "capture" && fraudStatus === "accept") {
         newStatus = "settlement";
+        statusText = "Pembayaran Berhasil";
+      } else if (transactionStatus === "settlement") {
+        statusText = "Pembayaran Berhasil";
+      } else if (transactionStatus === "pending") {
+        statusText = "Menunggu Pembayaran";
+      } else if (transactionStatus === "cancel") {
+        statusText = "Dibatalkan";
+      } else if (transactionStatus === "expire") {
+        statusText = "Kadaluarsa";
+      } else if (transactionStatus === "deny") {
+        statusText = "Ditolak";
       }
 
       await order.update({
         status: newStatus,
         paymentType: paymentType,
       });
+
+      // Kirim email notifikasi status order
+      await sendOrderStatusEmail(order, statusText);
 
       console.log(`Order ${orderId} status updated to ${newStatus}`);
     }

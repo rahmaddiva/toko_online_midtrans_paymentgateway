@@ -1,20 +1,51 @@
 const { Product } = require("../models");
 const { Op } = require("sequelize");
 
-// @desc    Get all products
+// @desc    Get all products (public, sanitized)
 // @route   GET /api/products
 // @access  Public
 exports.getAllProducts = async (req, res, next) => {
   try {
+    // Query param: search, category
+    const { search = "", category = "" } = req.query;
+    const where = { isActive: true };
+    if (category) where.category = category;
+    if (search) {
+      where.name = { [Op.like]: `%${search.replace(/%/g, "")}%'` };
+    }
     const products = await Product.findAll({
-      where: { isActive: true },
+      where,
       order: [["createdAt", "DESC"]],
+      attributes: { exclude: ["costPrice"] }, // pastikan tidak ada data sensitif
     });
-
     res.status(200).json({
       success: true,
       count: products.length,
       data: products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get unique product categories (public)
+// @route   GET /api/products/categories
+// @access  Public
+exports.getCategories = async (req, res, next) => {
+  try {
+    const categories = await Product.findAll({
+      where: { isActive: true },
+      attributes: [
+        [
+          Product.sequelize.fn("DISTINCT", Product.sequelize.col("category")),
+          "category",
+        ],
+      ],
+      order: [["category", "ASC"]],
+    });
+    res.status(200).json({
+      success: true,
+      data: categories.map((c) => c.category).filter(Boolean),
     });
   } catch (error) {
     next(error);

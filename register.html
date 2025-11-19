@@ -10,15 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+            background: #f5f6fa;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -26,88 +20,113 @@
             padding: 1rem;
         }
 
-        .register-wrapper {
+        .register-main {
+            display: flex;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(60, 60, 60, 0.10);
+            overflow: hidden;
+            max-width: 900px;
             width: 100%;
-            max-width: 450px;
+            min-height: 520px;
+        }
+
+        .register-image {
+            flex: 1 1 0;
+            background: #e7eaf6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 320px;
+            min-height: 400px;
+        }
+
+        .register-image img {
+            width: 90%;
+            max-width: 340px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(60, 60, 60, 0.08);
+            object-fit: cover;
+        }
+
+        .register-wrapper {
+            flex: 1 1 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 2.5rem;
+            min-width: 320px;
         }
 
         .auth-container {
-            background: #ffffff;
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.5s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            width: 100%;
+            max-width: 400px;
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
+            animation: none;
         }
 
         .auth-header {
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 2rem;
         }
 
         .auth-header-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+            width: 56px;
+            height: 56px;
+            background: #22223b;
             border-radius: 12px;
             margin-bottom: 1rem;
         }
 
         .auth-header-icon i {
-            color: #ffffff;
-            font-size: 1.75rem;
+            color: #fff;
+            font-size: 1.5rem;
         }
 
         .auth-header h1 {
-            font-size: 1.75rem;
+            font-size: 1.6rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
-            color: #1f2937;
+            color: #22223b;
         }
 
         .auth-header p {
             color: #6b7280;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.3rem;
         }
 
         label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #374151;
+            font-weight: 600;
+            color: #22223b;
+            font-size: 0.97rem;
         }
 
         input {
             width: 100%;
-            padding: 0.875rem 1rem;
-            border: 1px solid #e5e7eb;
+            padding: 0.85rem 1rem;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
             font-size: 1rem;
-            transition: all 0.2s ease-in-out;
-            font-family: inherit;
+            transition: all 0.3s ease;
+            background-color: #f9fafb;
         }
 
         input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            background-color: #ffffff;
+            border-color: #22223b;
+            box-shadow: 0 0 0 2px #e7eaf6;
             outline: none;
         }
 
@@ -126,30 +145,30 @@
         }
 
         .password-toggle .toggle-icon:hover {
-            color: #6366f1;
+            color: #22223b;
         }
 
         button[type="submit"] {
             width: 100%;
-            padding: 0.875rem 1rem;
-            background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
-            color: #ffffff;
+            padding: 0.85rem 1rem;
+            background: #22223b;
+            color: #fff;
             border: none;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease;
             margin-top: 1rem;
         }
 
         button[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+            background: #4a4e69;
+            box-shadow: 0 4px 16px rgba(60, 60, 60, 0.10);
         }
 
         button[type="submit"]:active {
-            transform: translateY(0);
+            background: #22223b;
         }
 
         .loading-spinner {
@@ -157,7 +176,7 @@
             width: 20px;
             height: 20px;
             border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #ffffff;
+            border-top-color: #fff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto;
@@ -182,13 +201,15 @@
         }
 
         .auth-footer a {
-            color: #6366f1;
+            color: #22223b;
             text-decoration: none;
             font-weight: 600;
+            transition: color 0.2s;
         }
 
         .auth-footer a:hover {
             text-decoration: underline;
+            color: #4a4e69;
         }
 
         .error-message {
@@ -197,66 +218,103 @@
             margin-top: 0.25rem;
             display: none;
         }
+
+        @media (max-width: 900px) {
+            .register-main {
+                flex-direction: column;
+                min-height: unset;
+            }
+
+            .register-image {
+                min-height: 180px;
+                max-height: 220px;
+            }
+
+            .register-wrapper {
+                padding: 2rem 1.2rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .register-main {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .register-image {
+                display: none;
+            }
+
+            .register-wrapper {
+                padding: 1.2rem 0.5rem;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div class="register-wrapper">
-        <div class="auth-container">
-            <div class="auth-header">
-                <div class="auth-header-icon">
-                    <i class="fas fa-user-plus"></i>
-                </div>
-                <h1>Daftar Akun</h1>
-                <p>Buat akun untuk mulai berbelanja</p>
-            </div>
-
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="name">Nama Lengkap</label>
-                    <input type="text" id="name" name="name" required placeholder="Masukkan nama lengkap">
-                    <div class="error-message" id="nameError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required placeholder="Masukkan email">
-                    <div class="error-message" id="emailError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone">No. Telepon</label>
-                    <input type="tel" id="phone" name="phone" required placeholder="Masukkan nomor telepon">
-                    <div class="error-message" id="phoneError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-toggle">
-                        <input type="password" id="password" name="password" required
-                            placeholder="Masukkan password minimal 6 karakter">
-                        <i class="fas fa-eye toggle-icon" id="togglePassword"></i>
+    <div class="register-main">
+        <div class="register-image">
+            <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=600&q=80"
+                alt="Fashion Register" />
+        </div>
+        <div class="register-wrapper">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <div class="auth-header-icon">
+                        <i class="fas fa-user-plus"></i>
                     </div>
-                    <div class="error-message" id="passwordError"></div>
+                    <h1>Daftar Akun</h1>
+                    <p>Buat akun untuk mulai berbelanja</p>
                 </div>
 
-                <div class="form-group">
-                    <label for="confirmPassword">Konfirmasi Password</label>
-                    <div class="password-toggle">
-                        <input type="password" id="confirmPassword" name="confirmPassword" required
-                            placeholder="Ulangi password">
-                        <i class="fas fa-eye toggle-icon" id="toggleConfirm"></i>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="name">Nama Lengkap</label>
+                        <input type="text" id="name" name="name" required placeholder="Masukkan nama lengkap">
+                        <div class="error-message" id="nameError"></div>
                     </div>
-                    <div class="error-message" id="confirmError"></div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required placeholder="Masukkan email">
+                        <div class="error-message" id="emailError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">No. Telepon</label>
+                        <input type="tel" id="phone" name="phone" required placeholder="Masukkan nomor telepon">
+                        <div class="error-message" id="phoneError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-toggle">
+                            <input type="password" id="password" name="password" required
+                                placeholder="Masukkan password minimal 6 karakter">
+                            <i class="fas fa-eye toggle-icon" id="togglePassword"></i>
+                        </div>
+                        <div class="error-message" id="passwordError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Konfirmasi Password</label>
+                        <div class="password-toggle">
+                            <input type="password" id="confirmPassword" name="confirmPassword" required
+                                placeholder="Ulangi password">
+                            <i class="fas fa-eye toggle-icon" id="toggleConfirm"></i>
+                        </div>
+                        <div class="error-message" id="confirmError"></div>
+                    </div>
+
+                    <button type="submit" id="submitBtn">
+                        <span id="btnText">Daftar</span>
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Sudah punya akun? <a href="/login.html">Login di sini</a></p>
                 </div>
-
-                <button type="submit" id="submitBtn">
-                    <span id="btnText">Daftar</span>
-                </button>
-            </form>
-
-            <div class="auth-footer">
-                <p>Sudah punya akun? <a href="/login.html">Login di sini</a></p>
             </div>
         </div>
     </div>

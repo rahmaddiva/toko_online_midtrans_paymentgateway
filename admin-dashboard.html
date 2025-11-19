@@ -662,6 +662,7 @@
                                     <th>ID Pesanan</th>
                                     <th>Pelanggan</th>
                                     <th>Total</th>
+                                    <th>Metode Bayar</th>
                                     <th>Status</th>
                                     <th>Tanggal</th>
                                     <th>Aksi</th>
@@ -1038,13 +1039,14 @@
             tbody.innerHTML = orders.map((order, index) => `
                 <tr>
                     <td>${index + 1}</td>
-                    <td>#${order.id}</td>
-                    <td>${order.User?.name || 'Unknown'}</td>
-                    <td>Rp${order.totalPrice.toLocaleString('id-ID')}</td>
-                    <td><span class="badge badge-${getStatusClass(order.status)}">${order.status}</span></td>
+                    <td>#${order.orderId}</td>
+                    <td>${order.user?.name || order.User?.name || order.customerName || 'Unknown'}</td>
+                    <td>Rp${Number(order.total || order.totalPrice || 0).toLocaleString('id-ID')}</td>
+                    <td>${order.paymentType ? order.paymentType.replace(/_/g, ' ').toUpperCase() : '-'}</td>
+                    <td><span class="badge badge-${getStatusClass(order.status)}">${getStatusLabel(order.status)}</span></td>
                     <td>${new Date(order.createdAt).toLocaleDateString('id-ID')}</td>
                     <td>
-                        <button class="btn-sm btn-view" onclick="viewOrder(${order.id})">
+                            <button class="btn-sm btn-view" onclick="viewOrder('${order.orderId}')">
                             <i class="fas fa-eye"></i> Lihat
                         </button>
                     </td>
@@ -1056,34 +1058,82 @@
             const classes = {
                 'pending': 'pending',
                 'processing': 'info',
+                'settlement': 'success',
+                'capture': 'success',
+                'cancel': 'danger',
+                'deny': 'danger',
+                'expire': 'danger',
                 'shipped': 'info',
                 'completed': 'success'
             };
             return classes[status] || 'pending';
         }
 
-        function viewOrder(id) {
+        function getStatusLabel(status) {
+            const map = {
+                'pending': 'Pending',
+                'settlement': 'Selesai',
+                'capture': 'Selesai',
+                'cancel': 'Dibatalkan',
+                'deny': 'Ditolak',
+                'expire': 'Kadaluarsa',
+                'processing': 'Diproses',
+                'shipped': 'Dikirim',
+                'completed': 'Selesai'
+            };
+            return map[status] || status;
+        }
+
+        async function viewOrder(orderId) {
             // Fetch order detail
-            fetch(`${API_BASE_URL}/api/orders/${id}`)
-                .then(r => r.json())
-                .then(result => {
-                    if (result.success) {
-                        const order = result.data;
-                        const detail = document.getElementById('orderDetail');
-                        detail.innerHTML = `
+            const token = localStorage.getItem('token');
+
+            const resp = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include'
+            });
+            const result = await resp.json();
+
+            if (!result.success) return;
+
+            const order = result.data;
+            // Get midtrans status via API
+            let txn = null;
+            try {
+                const txRes = await fetch(`${API_BASE_URL}/api/payment/status/${order.orderId}`);
+                const txJson = await txRes.json();
+                if (txJson.success) txn = txJson.data;
+            } catch (err) {
+                console.error('Error fetching transaction status:', err);
+            }
+            const detail = document.getElementById('orderDetail');
+            detail.innerHTML = `
                             <div style="margin-bottom: 1rem;">
-                                <p><strong>ID Pesanan:</strong> #${order.id}</p>
-                                <p><strong>Pelanggan:</strong> ${order.User?.name || 'Unknown'}</p>
-                                <p><strong>Email:</strong> ${order.User?.email || 'Unknown'}</p>
-                                <p><strong>Total:</strong> Rp${order.totalPrice.toLocaleString('id-ID')}</p>
-                                <p><strong>Status:</strong> <span class="badge badge-${getStatusClass(order.status)}">${order.status}</span></p>
+                                <p><strong>ID Pesanan:</strong> #${order.orderId}</p>
+                                <p><strong>Pelanggan:</strong> ${order.user?.name || order.User?.name || order.customerName || 'Unknown'}</p>
+                                <p><strong>Email:</strong> ${order.user?.email || order.User?.email || order.customerEmail || 'Unknown'}</p>
+                                <p><strong>Total:</strong> Rp${Number(order.total || order.totalPrice || 0).toLocaleString('id-ID')}</p>
+                                <p><strong>Metode Bayar:</strong> ${order.paymentType ? order.paymentType.replace(/_/g, ' ').toUpperCase() : '-'}</p>
+                                <p><strong>Status Order:</strong> <span class="badge badge-${getStatusClass(order.status)}">${getStatusLabel(order.status)}</span></p>
+                                <div style="margin-top:0.5rem;">
+                                    <p style="margin:0.25rem 0; font-weight:700;">Items:</p>
+                                    ${order.items.map(it => `
+                                        <div style="display:flex;justify-content:space-between; font-size:0.95rem; padding:0.25rem 0; border-bottom:1px solid #f3f4f6;">
+                                            <div>${it.name} x ${it.quantity}</div>
+                                            <div>Rp${Number(it.price * it.quantity).toLocaleString('id-ID')}</div>
+                                        </div>
+                                    `).join('\n')}
+                                </div>
+                                <p><strong>Status Pembayaran Midtrans:</strong> ${txn ? txn.transaction_status : '-'}</p>
+                                <p><strong>Waktu Transaksi:</strong> ${txn ? txn.transaction_time : '-'}</p>
                                 <p><strong>Tanggal:</strong> ${new Date(order.createdAt).toLocaleDateString('id-ID')}</p>
                             </div>
                         `;
-                        openOrderModal();
-                    }
-                });
+            openOrderModal();
         }
+
 
         function openOrderModal() {
             document.getElementById('orderModal').classList.add('active');
