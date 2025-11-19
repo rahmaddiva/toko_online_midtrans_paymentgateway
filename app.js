@@ -940,6 +940,11 @@ async function handleCustomerLogout() {
   }
 }
 
+// Hapus session login saat browser/tab ditutup
+window.addEventListener("unload", () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+});
 // --- END CUSTOMER PROFILE MANAGEMENT ---
 
 // --- INISIALISASI ---
