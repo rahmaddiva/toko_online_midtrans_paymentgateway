@@ -474,6 +474,11 @@ exports.updateOrderStatus = async (req, res, next) => {
       paymentType: paymentType || order.paymentType,
     });
 
+    // Kirim email hanya jika pembayaran selesai/settlement
+    if (status === "settlement" || status === "capture") {
+      await sendOrderStatusEmail(order, "Pembayaran Berhasil");
+    }
+
     console.log(`Order ${orderId} status updated to ${status}`);
 
     res.status(200).json({
