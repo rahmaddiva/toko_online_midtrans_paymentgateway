@@ -440,8 +440,8 @@ MIT License - feel free to use this project
 
 ## 👨‍💻 Author
 
-**Toko Online Midtrans Payment Gateway** - Open Source E-Commerce Solution
+**Toko Online Midtrans Payment Gateway - Rahmad Diva** - Open Source E-Commerce Solution
 
 ---
 
-**Terakhir diupdate:** November 17, 2025
+**Terakhir diupdate:** 25 Januari 2025
